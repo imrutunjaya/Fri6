@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Unique Loading & Intro Site</title>
+  <style>
+    /* CSS Variables */
+    :root {
+      --bg-color: #000000;
+      --text-color: #ffffff;
+      --top-bar-bg: #111111;
+      --mini-line-bg: #ffffff;
+      --mini-line-shadow: rgba(255 255 255 / 0.15);
+      --mini-line-border: #1e90ff;
+      --menu-icon-color: #fff;
+      --menu-icon-hover: #1e90ff;
+      --content-bg: #111111;
+      --content-border: #222;
+      --loading-circular-line: #fff;
+      --plus-box-bg: transparent;
+      --plus-box-border: var(--text-color);
+      --plus-box-hover-bg: #1e90ff;
+      --plus-box-hover-color: #fff;
+      --tab-bar-bg: #111111;
+      --tab-icon-color: #aaa;
+      --tab-icon-active-color: #1e90ff;
+      --tab-text-color: #aaa;
+      --tab-text-active-color: #1e90ff;
+      --tab-border-color: #1e90ff;
+    }
+    body[data-theme="light"] {
+      --bg-color: #fff;
+      --text-color: #000;
+      --top-bar-bg: #f9f9f9;
+      --mini-line-bg: #222;
+      --mini-line-shadow: rgba(0 0 0 / 0.3);
+      --mini-line-border: #2177ff;
+      --menu-icon-color: #000;
+      --menu-icon-hover: #2177ff;
+      --content-bg: #fafafa;
+      --content-border: #ccc;
+      --loading-circular-line: #000;
+      --plus-box-bg: transparent;
+      --plus-box-border: var(--text-color);
+      --plus-box-hover-bg: #2177ff;
+      --plus-box-hover-color: #fff;
+      --tab-bar-bg: #f9f9f9;
+      --tab-icon-color: #555;
+      --tab-icon-active-color: #2177ff;
+      --tab-text-color: #555;
+      --tab-text-active-color: #2177ff;
+      --tab-border-color: #2177ff;
+    }
+    /* Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      user-select: none;
+    }
+    html, body {
+      height: 100%;
+      width: 100%;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      padding-bottom: 76px; /* for bottom tab bar */
+    }
+    /* Initial Loading Screen - vertical stack center to bottom */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 4vh;
+      padding-top: 35vh;
+      user-select:none;
+      text-align: center;
+      z-index: 10001;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 1.2s ease, visibility 1.2s ease;
+    }
+    #loading-screen.faded {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #loading-screen .hello-word {
+      font-weight: 900;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      text-transform: uppercase;
+      color: var(--text-color);
+      opacity: 0;
+      animation: helloFade 12s linear forwards;
+      white-space: nowrap;
+      will-change: opacity, transform;
+      line-height: 1;
+    }
+    #loading-screen .hello-word:nth-child(1) { animation-delay: 0s; }
+    #loading-screen .hello-word:nth-child(2) { animation-delay: 2s; }
+    #loading-screen .hello-word:nth-child(3) { animation-delay: 4s; }
+    #loading-screen .hello-word:nth-child(4) { animation-delay: 6s; }
+    #loading-screen .hello-word:nth-child(5) { animation-delay: 8s; }
+    #loading-screen .hello-word:nth-child(6) { animation-delay: 10s; }
+    @keyframes helloFade {
+      0% {opacity: 0; transform: scale(0.85);}
+      8% {opacity: 1; transform: scale(1);}
+      25% {opacity: 1; transform: scale(1);}
+      33% {opacity: 0; transform: scale(0.85);}
+      100% {opacity: 0;}
+    }
+
+    /* Linear loading bar below words like Mac style */
+    #loading-bar-container {
+      width: 260px;
+      height: 4px;
+      background: rgba(255 255 255 / 0.15);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 2vh;
+    }
+    #loading-bar {
+      width: 0;
+      height: 100%;
+      background: var(--text-color);
+      border-radius: 2px;
+      animation: loadingBarAnim 12s linear forwards;
+    }
+    @keyframes loadingBarAnim {
+      0% {width: 0;}
+      100% {width: 100%;}
+    }
+
+    /* Top bar */
+    #top-bar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 56px;
+      background-color: var(--top-bar-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 2px 8px rgba(0 0 0 / 0.1);
+      user-select:none;
+      z-index: 10000;
+      color: var(--text-color);
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease, background-color 0.4s ease, color 0.4s ease;
+      /* Fix to be fully fixed on top */
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    #top-bar.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #logo-ms {
+      width: 50px;
+      height: 40px;
+      cursor: pointer;
+      user-select:none;
+      flex-shrink: 0;
+      stroke: var(--text-color);
+      fill: none;
+      stroke-width: 1.6;
+      transition: stroke 0.4s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #logo-ms:hover,
+    #logo-ms:focus {
+      stroke: var(--mini-line-border);
+      outline: none;
+    }
+    #logo-ms svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #loading-circular {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      margin: 0 auto;
+      user-select:none;
+      flex-shrink: 0;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    #loading-circular.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #loading-circular .line {
+      position: absolute;
+      width: 1.2px;
+      height: 14px;
+      background: var(--loading-circular-line);
+      border-radius: 1px;
+      top: 6px;
+      left: calc(50% - 0.6px);
+      opacity: 0.25;
+      transform-origin: center bottom;
+      animation: pulseLineBW 1.2s infinite ease-in-out;
+      transition: background-color 0.4s ease;
+    }
+    #loading-circular .line:nth-child(1)  { transform: rotate(0deg);   animation-delay: 0s;   }
+    #loading-circular .line:nth-child(2)  { transform: rotate(30deg);  animation-delay: 0.1s; }
+    #loading-circular .line:nth-child(3)  { transform: rotate(60deg);  animation-delay: 0.2s; }
+    #loading-circular .line:nth-child(4)  { transform: rotate(90deg);  animation-delay: 0.3s; }
+    #loading-circular .line:nth-child(5)  { transform: rotate(120deg); animation-delay: 0.4s; }
+    #loading-circular .line:nth-child(6)  { transform: rotate(150deg); animation-delay: 0.5s; }
+    #loading-circular .line:nth-child(7)  { transform: rotate(180deg); animation-delay: 0.6s; }
+    #loading-circular .line:nth-child(8)  { transform: rotate(210deg); animation-delay: 0.7s; }
+    #loading-circular .line:nth-child(9)  { transform: rotate(240deg); animation-delay: 0.8s; }
+    #loading-circular .line:nth-child(10) { transform: rotate(270deg); animation-delay: 0.9s; }
+    #loading-circular .line:nth-child(11) { transform: rotate(300deg); animation-delay: 1.0s; }
+    #loading-circular .line:nth-child(12) { transform: rotate(330deg); animation-delay: 1.1s; }
+
+    @keyframes pulseLineBW {
+      0%, 100% {opacity: 0.25;}
+      50% {opacity: 1;}
+    }
+    #plus-box {
+      width: 32px;
+      height: 32px;
+      border: 1.8px solid var(--text-color);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select:none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--text-color);
+      font-weight: 700;
+      line-height: 1;
+      transition: border-color 0.35s ease, color 0.35s ease, background-color 0.35s ease;
+    }
+    #plus-box:hover,
+    #plus-box:focus {
+      background-color: var(--mini-line-border);
+      color: #000;
+      border-color: var(--mini-line-border);
+      outline: none;
+    }
+    #mini-line {
+      position: fixed;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2.5px;
+      background: var(--mini-line-bg);
+      cursor: pointer;
+      box-shadow: inset 0 0 3px var(--mini-line-shadow);
+      transition: width 0.35s ease, box-shadow 0.35s ease, background-color 0.4s ease, border-top 0.4s ease;
+      z-index: 10000;
+      user-select:none;
+      border-radius: 2px;
+      border-top: none;
+    }
+    #mini-line.expanded {
+      width: 100%;
+      box-shadow: inset 0 0 10px var(--mini-line-border);
+      border-top: 2.5px solid var(--mini-line-border);
+      left: 0;
+      transform: none;
+      border-radius: 0;
+      background: var(--top-bar-bg);
+    }
+    #menu {
+      position: fixed;
+      top: 62px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      display: flex;
+      gap: 38px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      user-select:none;
+      z-index: 10000;
+      color: var(--text-color);
+      font-weight: 400;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+    }
+    #mini-line.expanded + #menu {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .menu-item {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select:none;
+      transition: transform 0.25s ease, color 0.25s ease;
+      color: var(--menu-icon-color);
+      position: relative;
+    }
+    .menu-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--menu-icon-color);
+      stroke-width: 1.5;
+      fill: none;
+      transition: stroke 0.3s ease;
+      margin-bottom: 4px;
+    }
+    .menu-item:hover svg,
+    .menu-item:focus svg {
+      stroke: var(--menu-icon-hover);
+      outline: none;
+    }
+    .menu-item:hover,
+    .menu-item:focus {
+      color: var(--menu-icon-hover);
+      outline: none;
+      transform: scale(1.2);
+    }
+    .menu-item span {
+      user-select:none;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      color: var(--tab-text-color);
+    }
+    .menu-item.active span {
+      color: var(--tab-text-active-color);
+    }
+    .menu-item.active svg {
+      stroke: var(--tab-icon-active-color);
+    }
+    #bottom-tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 66px;
+      background: var(--tab-bar-bg);
+      backdrop-filter: saturate(180%) blur(10px);
+      box-shadow: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 60px;
+      z-index: 10001;
+      user-select:none;
+    }
+    .tab-item {
+      background: none;
+      border: none;
+      color: var(--tab-icon-color);
+      cursor: pointer;
+      font: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 0;
+      position: relative;
+      outline-offset: 2px;
+      transition: color 0.3s ease;
+      user-select:none;
+    }
+    .tab-item svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--tab-icon-color);
+      transition: stroke 0.3s ease;
+      fill: none;
+    }
+    .tab-item span {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--tab-text-color);
+    }
+    .tab-item.active {
+      color: var(--tab-text-active-color);
+    }
+    .tab-item.active svg {
+      stroke: var(--tab-icon-active-color);
+    }
+    .tab-item:focus-visible {
+      outline: 2px solid var(--tab-icon-active-color);
+      outline-offset: 4px;
+    }
+    .tab-indicator {
+      position: absolute;
+      bottom: -6px;
+      width: 6px;
+      height: 6px;
+      background-color: var(--tab-border-color);
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .tab-item.active .tab-indicator {
+      opacity: 1;
+    }
+    #content-container {
+      position: fixed;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 960px;
+      min-height: 400px;
+      background: var(--content-bg);
+      border-radius: 12px;
+      border: 1.6px solid var(--content-border);
+      padding: 26px 24px;
+      color: var(--text-color);
+      user-select:none;
+      box-shadow: 0 0 8px rgba(0,0,0,0.07);
+      transition: border-radius 0.3s ease, border-color 0.3s ease, color 0.4s ease, background-color 0.4s ease;
+      font-weight: 400;
+      line-height: 1.45;
+      overflow-y: auto;
+      max-height: calc(100vh - 170px);
+    }
+  </style>
+<body>
+
+  <!-- Initial Loading Screen with multilingual HELLO words -->
+  <div id="loading-screen" role="alert" aria-live="assertive" aria-label="Loading">
+    <span class="hello-word">HELLO</span>
+    <span class="hello-word">HOLA</span>
+    <span class="hello-word">नमस्ते</span>
+    <span class="hello-word">ନମସ୍କାର</span>
+    <span class="hello-word">হ্যালো</span>
+    <span class="hello-word">नमस्कार</span>
+    <div id="loading-bar-container" aria-hidden="true">
+      <div id="loading-bar"></div>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <header id="top-bar" role="banner">
+    <div id="logo-ms" tabindex="0" aria-label="Brand logo MS, click to toggle theme" role="button" title="Toggle theme">
+      <svg viewBox="0 0 64 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" >
+        <path d="M4 44 V4 L18 34 L32 4 V44" />
+        <path d="M41 12 C 28,12 43,22 39,28 C 34,34 23,34 25,44 H55" />
+      </svg>
+    </div>
+    <div id="loading-circular" aria-label="Loading animation" role="img">
+      <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+      <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+      <div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div>
+    </div>
+    <div id="plus-box" tabindex="0" role="button" aria-label="Add new item" title="Add new item">+</div>
+  </header>
+
+  <!-- Mini Line -->
+  <div id="mini-line" tabindex="0" aria-expanded="false" role="button" title="Toggle menu"></div>
+  <nav id="menu" aria-label="Main navigation" tabindex="-1">
+    <div class="menu-item active" tabindex="0" role="button" aria-label="Home">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 12L12 3l9 9v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-8z"/>
+      </svg>
+      <span>Home</span>
+    </div>
+    <div class="menu-item" tabindex="0" role="button" aria-label="Browse">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="4" stroke-width="2"/>
+      </svg>
+      <span>Browse</span>
+    </div>
+    <div class="menu-item" tabindex="0" role="button" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke-linejoin="round"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+      <span>Notifications</span>
+    </div>
+  </nav>
+
+  <!-- Bottom Tab Bar -->
+  <nav id="bottom-tab-bar" role="tablist" aria-label="Main navigation">
+    <button class="tab-item active" role="tab" aria-selected="true" tabindex="0" aria-controls="tab-home" id="tab-home-btn">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 12L12 3l9 9v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-8z"/>
+      </svg>
+      <span>Home</span>
+      <div class="tab-indicator"></div>
+    </button>
+    <button class="tab-item" role="tab" aria-selected="false" tabindex="-1" aria-controls="tab-browse" id="tab-browse-btn">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="4" stroke-width="2"/>
+      </svg>
+      <span>Browse</span>
+      <div class="tab-indicator"></div>
+    </button>
+    <button class="tab-item" role="tab" aria-selected="false" tabindex="-1" aria-controls="tab-notifications" id="tab-notifications-btn">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke-linejoin="round"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+      <span>Notifications</span>
+      <div class="tab-indicator"></div>
+    </button>
+  </nav>
+
+  <!-- Content container -->
+  <main id="content-container" tabindex="0" aria-label="Main content container">
+    <h2>Welcome to the Customizable Container</h2>
+    <p>This container below the mini line has customizable edges and styling. Add your content here.</p>
+  </main>
+
+  <script>
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingCircular = document.getElementById('loading-circular');
+    const miniLine = document.getElementById('mini-line');
+    const menu = document.getElementById('menu');
+    const logoMS = document.getElementById('logo-ms');
+    const plusBox = document.getElementById('plus-box');
+    const topBar = document.getElementById('top-bar');
+    const bottomTabBar = document.getElementById('bottom-tab-bar');
+
+    const tabItems = bottomTabBar.querySelectorAll('.tab-item');
+
+    function startSequence() {
+      // After 12s fade out loading screen
+      setTimeout(() => {
+        loadingScreen.classList.add('faded');
+        // Show UI elements (top bar, mini line, menu, bottom tab)
+        topBar.classList.add('visible');
+        miniLine.style.display = 'block';
+        menu.style.display = 'flex';
+        bottomTabBar.style.display = 'flex';
+      }, 12000);
+
+      // After 15s hide circular loader gracefully
+      setTimeout(() => {
+        loadingCircular.classList.add('hidden');
+      }, 15000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initially hide UI elements except loading screen
+      topBar.style.opacity = '0';
+      miniLine.style.display = 'none';
+      menu.style.display = 'none';
+      bottomTabBar.style.display = 'none';
+      loadingCircular.style.opacity = '1';
+
+      startSequence();
+    });
+
+    miniLine.addEventListener('click', () => {
+      if (miniLine.classList.contains('expanded')) {
+        miniLine.classList.remove('expanded');
+        miniLine.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('tabindex', '-1');
+      } else {
+        miniLine.classList.add('expanded');
+        miniLine.setAttribute('aria-expanded', 'true');
+        menu.setAttribute('tabindex', '0');
+      }
+    });
+    miniLine.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        miniLine.click();
+      }
+    });
+
+    logoMS.addEventListener('click', () => {
+      if (document.body.getAttribute('data-theme') === 'light') {
+        document.body.removeAttribute('data-theme');
+      } else {
+        document.body.setAttribute('data-theme', 'light');
+      }
+    });
+    logoMS.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        logoMS.click();
+      }
+    });
+
+    plusBox.addEventListener('click', () => {
+      alert('Plus box clicked! Add your functionality here.');
+    });
+    plusBox.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        plusBox.click();
+      }
+    });
+
+    tabItems.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabItems.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+          t.tabIndex = -1;
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        tab.tabIndex = 0;
+      });
+      tab.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          tab.click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
